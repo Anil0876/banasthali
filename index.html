@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banasthali Test for Nikki Singh</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+        }
+        .video-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 250px;
+            height: 250px;
+            border: 2px solid #e53e3e;
+            border-radius: 8px;
+            background: #000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+        .attention-alert {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #e53e3e;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1100;
+            display: none;
+        }
+        .question-container {
+            transition: all 0.3s ease;
+        }
+        .active-question {
+            background-color: #ebf8ff;
+            border-left: 4px solid #3182ce;
+        }
+        .timer {
+            font-family: monospace;
+        }
+        /* Splash screen styles */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            color: white;
+        }
+        .splash-content {
+            background-color: #1a365d;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-content">
+            <h1 class="text-3xl font-bold mb-4">Banasthali Test for Nikki Singh</h1>
+            <img src="https://upload.wikimedia.org/wikipedia/en/thumb/3/3e/Banasthali_Vidyapith_Logo.svg/1200px-Banasthali_Vidyapith_Logo.svg.png" alt="Banasthali Logo" class="mx-auto w-24 h-24 mb-6">
+            
+            <p class="text-lg mb-6">This test has strict monitoring requirements:</p>
+            <ul class="text-left mb-6 space-y-2">
+                <li>✅ Full camera access is required</li>
+                <li>✅ Microphone access is required for audio monitoring</li>
+                <li>⏱️ Test duration: 60 minutes</li>
+                <li>❓ 30 questions to answer</li>
+                <li>👀 You will be continuously monitored via camera</li>
+                <li>🚫 Movement detection will trigger warnings</li>
+            </ul>
+
+            <button id="beginTestBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300">
+                Begin Test
+            </button>
+        </div>
+    </div>
+
+    <!-- Test Container (Initially Hidden) -->
+    <div class="container mx-auto p-6 hidden" id="testContainer">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="bg-blue-800 text-white p-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-2xl font-bold">Banasthali Test for Nikki Singh</h1>
+                    <div class="timer text-xl font-mono bg-blue-900 px-4 py-2 rounded" id="timer">60:00</div>
+                </div>
+                <div class="mt-2 flex justify-between items-center">
+                    <div id="progress" class="text-sm">Question 1 of 30</div>
+                    <div id="studentId" class="text-sm">Test ID: BS2023NikkiSingh</div>
+                </div>
+            </div>
+
+            <!-- Test Content -->
+            <div class="p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Questions Navigation -->
+                <div class="md:col-span-1 bg-gray-50 p-4 rounded-lg">
+                    <h2 class="font-bold text-lg mb-4">Questions</h2>
+                    <div class="grid grid-cols-5 md:grid-cols-3 gap-2 mb-4" id="questionNumbers">
+                        <!-- Questions will be populated here by JavaScript -->
+                    </div>
+                    <button id="submitTestBtn" class="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded mt-4">
+                        Submit Test
+                    </button>
+                </div>
+
+                <!-- Current Question -->
+                <div class="md:col-span-3">
+                    <div class="question-container p-6 border border-gray-200 rounded-lg active-question" id="currentQuestion">
+                        <h2 class="text-xl font-bold mb-4" id="questionText">Loading question...</h2>
+                        
+                        <div class="space-y-3" id="optionsContainer">
+                            <!-- Options will be populated here by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between mt-6">
+                        <button id="prevBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                            Previous
+                        </button>
+                        <button id="nextBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Monitoring Container -->
+    <div class="video-container" id="videoContainer">
+        <div id="videoPlaceholder">Waiting for camera access...</div>
+    </div>
+
+    <!-- Attention Alert -->
+    <div class="attention-alert" id="attentionAlert">
+        <h3 class="font-bold text-lg">⚠️ Attention Required!</h3>
+        <p>Please stay focused on the test. Excessive movement detected.</p>
+        <button id="closeAlertBtn" class="bg-white text-red-600 px-4 py-1 rounded mt-2">I Understand</button>
+    </div>
+
+    <!-- Modal for confirmation -->
+    <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg max-w-md">
+            <h3 class="font-bold text-xl mb-4">Confirmation</h3>
+            <p id="confirmMessage">Are you sure you want to submit the test?</p>
+            <div class="flex justify-end mt-4 space-x-2">
+                <button id="confirmCancel" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+                <button id="confirmSubmit" class="px-4 py-2 bg-red-600 text-white rounded">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const config = {
+            testDuration: 60 * 60, // 60 minutes in seconds
+            totalQuestions: 30,
+            warningThreshold: 3, // Number of warnings before action
+            movementThreshold: 50, // Movement sensitivity (lower is more sensitive)
+            checkInterval: 5000 // Check for movement every 5 seconds
+        };
+
+        // State variables
+        let currentQuestion = 1;
+        let answers = new Array(config.totalQuestions).fill(null);
+        let timeLeft = config.testDuration;
+        let timerInterval;
+        let warningCount = 0;
+        let videoStream;
+        let previousFrameData;
+        let movementCheckInterval;
+        let testStarted = false;
+
+        // DOM Elements
+        const splashScreen = document.getElementById('splashScreen');
+        const testContainer = document.getElementById('testContainer');
+        const beginTestBtn = document.getElementById('beginTestBtn');
+        const timerElement = document.getElementById('timer');
+        const questionNumbersElement = document.getElementById('questionNumbers');
+        const questionTextElement = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitTestBtn = document.getElementById('submitTestBtn');
+        const progressElement = document.getElementById('progress');
+        const videoContainer = document.getElementById('videoContainer');
+        const videoPlaceholder = document.getElementById('videoPlaceholder');
+        const attentionAlert = document.getElementById('attentionAlert');
+        const closeAlertBtn = document.getElementById('closeAlertBtn');
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmCancel = document.getElementById('confirmCancel');
+        const confirmSubmit = document.getElementById('confirmSubmit');
+
+        // Questions data - in a real app these would come from a server
+        const questions = [];
+        for (let i = 1; i <= config.totalQuestions; i++) {
+            questions.push({
+                id: i,
+                text: `Question ${i}: What is the answer to question ${i}?`,
+                options: [
+                    `Option A for question ${i}`,
+                    `Option B for question ${i}`,
+                    `Option C for question ${i}`,
+                    `Option D for question ${i}`
+                ],
+                answer: Math.floor(Math.random() * 4) // Random correct answer for demo
+            });
+        }
+
+        // Initialize the test
+        function initTest() {
+            renderQuestionNavigation();
+            loadQuestion(currentQuestion);
+            updateProgress();
+            
+            // Start timer
+            timerInterval = setInterval(updateTimer, 1000);
+            
+            // Hide splash screen and show test
+            splashScreen.classList.add('hidden');
+            testContainer.classList.remove('hidden');
+            
+            // Setup video monitoring
+            setupVideoMonitoring();
+            
+            testStarted = true;
+        }
+
+        // Render question navigation numbers
+        function renderQuestionNavigation() {
+            questionNumbersElement.innerHTML = '';
+            questions.forEach((_, index) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full py-1 px-2 rounded border ${index + 1 === currentQuestion ? 'bg-blue-600 text-white' : answers[index] !== null ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-300'}`;
+                btn.textContent = index + 1;
+                btn.addEventListener('click', () => navigateToQuestion(index + 1));
+                questionNumbersElement.appendChild(btn);
+            });
+        }
+
+        // Load a question
+        function loadQuestion(questionNumber) {
+            const question = questions[questionNumber - 1];
+            questionTextElement.textContent = question.text;
+            
+            optionsContainer.innerHTML = '';
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                const optionId = `option-${questionNumber}-${index}`;
+                
+                optionDiv.className = 'flex items-center';
+                optionDiv.innerHTML = `
+                    <input type="radio" id="${optionId}" name="question-${questionNumber}" value="${index}"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500" 
+                        ${answers[questionNumber - 1] === index ? 'checked' : ''}>
+                    <label for="${optionId}" class="ml-2 block text-gray-700">${option}</label>
+                `;
+                
+                optionDiv.querySelector('input').addEventListener('change', (e) => {
+                    answers[questionNumber - 1] = parseInt(e.target.value);
+                    renderQuestionNavigation();
+                });
+                
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            // Update button states
+            prevBtn.disabled = questionNumber === 1;
+            nextBtn.disabled = questionNumber === config.totalQuestions;
+        }
+
+        // Navigate to a specific question
+        function navigateToQuestion(questionNumber) {
+            currentQuestion = questionNumber;
+            loadQuestion(currentQuestion);
+            updateProgress();
+            
+            // Scroll to question container
+            document.getElementById('currentQuestion').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Update progress display
+        function updateProgress() {
+            progressElement.textContent = `Question ${currentQuestion} of ${config.totalQuestions}`;
+            
+            // Update active state for question numbers
+            document.querySelectorAll('#questionNumbers button').forEach((btn, index) => {
+                if (index + 1 === currentQuestion) {
+                    btn.classList.add('bg-blue-600', 'text-white');
+                    btn.classList.remove('bg-green-100', 'border-green-500', 'bg-gray-100', 'border-gray-300');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add(answers[index] !== null ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-300');
+                }
+            });
+        }
+
+        // Update timer
+        function updateTimer() {
+            timeLeft--;
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerElement.textContent = '00:00';
+                submitTest(true);
+                return;
+            }
+            
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Change color when less than 5 minutes remain
+            if (timeLeft < 300) {
+                timerElement.classList.add('text-red-500');
+                timerElement.classList.remove('bg-blue-900');
+                timerElement.classList.add('bg-red-900');
+                
+                // Flash the last minute
+                if (timeLeft < 60 && timeLeft % 2 === 0) {
+                    timerElement.classList.add('animate-pulse');
+                }
+            }
+        }
+
+        // Setup video monitoring
+        async function setupVideoMonitoring() {
+            try {
+                // Request camera and microphone access
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: 640,
+                        height: 480,
+                        facingMode: 'user'
+                    },
+                    audio: true
+                });
+                
+                // Display video feed
+                const videoElement = document.createElement('video');
+                videoElement.autoplay = true;
+                videoElement.srcObject = videoStream;
+                videoPlaceholder.replaceWith(videoElement);
+                
+                // Start movement detection
+                movementCheckInterval = setInterval(checkForMovement, config.checkInterval);
+                
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                videoPlaceholder.textContent = 'Camera access denied. Test cannot continue.';
+                closeTestWithError('Camera access is required for this test.');
+            }
+        }
+
+        // Check for excessive movement
+        function checkForMovement() {
+            if (!testStarted) return;
+            
+            const videoElement = videoContainer.querySelector('video');
+            if (!videoElement) return;
+            
+            // Create canvas to analyze video frames
+            const canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            
+            const frameData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            
+            if (previousFrameData) {
+                let diff = 0;
+                
+                // Compare pixels between frames
+                for (let i = 0; i < frameData.length; i += 4) { // RGBA
+                    diff += Math.abs(frameData[i] - previousFrameData[i]); // R
+                    diff += Math.abs(frameData[i+1] - previousFrameData[i+1]); // G
+                    diff += Math.abs(frameData[i+2] - previousFrameData[i+2]); // B
+                }
+                
+                // Normalize difference based on image size
+                const normalizedDiff = diff / (canvas.width * canvas.height * 3);
+                
+                // Show warning if movement detected
+                if (normalizedDiff > config.movementThreshold) {
+                    warningCount++;
+                    showAttentionAlert();
+                    
+                    // Handle too many warnings
+                    if (warningCount >= config.warningThreshold) {
+                        clearInterval(movementCheckInterval);
+                        closeTestWithError('Too many warnings for movement. Test terminated.');
+                    }
+                }
+            }
+            
+            previousFrameData = frameData;
+        }
+
+        // Show attention alert
+        function showAttentionAlert() {
+            attentionAlert.style.display = 'block';
+            setTimeout(() => {
+                if (attentionAlert.style.display === 'block') {
+                    attentionAlert.style.display = 'none';
+                }
+            }, 5000);
+        }
+
+        // Submit test
+        function submitTest(timeout = false) {
+            if (timeout) {
+                confirmMessage.textContent = 'Time is up! Your test will now be submitted.';
+            } else {
+                confirmMessage.textContent = 'Are you sure you want to submit the test?';
+            }
+            
+            confirmModal.classList.remove('hidden');
+            
+            // Disable navigation while modal is open
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            submitTestBtn.disabled = true;
+        }
+
+        // Close test with error
+        function closeTestWithError(message) {
+            alert(message);
+            // In a real app, you would send this to the server
+            console.log('Test terminated:', message);
+            
+            // Clean up
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            clearInterval(timerInterval);
+            clearInterval(movementCheckInterval);
+        }
+
+        // Close test normally (successful submission)
+        function closeTest() {
+            // Calculate score (for demo)
+            let score = 0;
+            questions.forEach((q, index) => {
+                if (answers[index] === q.answer) score++;
+            });
+            
+            alert(`Test submitted! Your score: ${score}/${config.totalQuestions}`);
+            
+            // Clean up
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            clearInterval(timerInterval);
+            clearInterval(movementCheckInterval);
+        }
+
+        // Event Listeners
+        beginTestBtn.addEventListener('click', () => {
+            // Show final warning before starting
+            if (confirm('WARNING: This test will access your camera and microphone. You will be monitored throughout the test. Do you agree to proceed?')) {
+                initTest();
+            }
+        });
+
+        prevBtn.addEventListener('click', () => navigateToQuestion(currentQuestion - 1));
+        nextBtn.addEventListener('click', () => navigateToQuestion(currentQuestion + 1));
+        submitTestBtn.addEventListener('click', () => submitTest());
+        closeAlertBtn.addEventListener('click', () => attentionAlert.style.display = 'none');
+        confirmCancel.addEventListener('click', () => {
+            confirmModal.classList.add('hidden');
+            prevBtn.disabled = currentQuestion === 1;
+            nextBtn.disabled = currentQuestion === config.totalQuestions;
+            submitTestBtn.disabled = false;
+        });
+        confirmSubmit.addEventListener('click', () => {
+            confirmModal.classList.add('hidden');
+            closeTest();
+        });
+
+        // Initialize with splash screen
+        splashScreen.classList.remove('hidden');
+    </script>
+</body>
+</html>
