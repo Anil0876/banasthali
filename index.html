@@ -220,7 +220,6 @@
         let previousFrameData;
         let movementCheckInterval;
         let testStarted = false;
-        let permissionsGranted = false;
 
         // DOM Elements
         const permissionModal = document.getElementById('permissionModal');
@@ -262,38 +261,44 @@
             });
         }
 
-        // Check current permissions
+        // Check if permissions are already granted
         async function checkPermissions() {
             try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const hasCamera = devices.some(device => device.kind === 'videoinput');
-                const hasMic = devices.some(device => device.kind === 'audioinput');
-                
-                if (hasCamera && hasMic) {
-                    permissionsGranted = true;
-                    return true;
-                }
-                return false;
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                // Immediately stop the stream (we just wanted to check permissions)
+                stream.getTracks().forEach(track => track.stop());
+                return true;
             } catch (error) {
-                console.error('Error checking permissions:', error);
                 return false;
             }
         }
 
         // Initialize the test
         async function initTest() {
-            renderQuestionNavigation();
-            loadQuestion(currentQuestion);
-            updateProgress();
-            startTimer();
-            testStarted = true;
-            splashScreen.classList.add('hidden');
-            testContainer.classList.remove('hidden');
-            
             try {
+                // First try to get permissions without showing the permission prompt
+                const hasPermissions = await checkPermissions();
+                
+                if (!hasPermissions) {
+                    // If permissions aren't granted, show the permission modal
+                    permissionModal.classList.remove('hidden');
+                    return;
+                }
+
+                // If we have permissions, proceed with test setup
                 await setupVideoMonitoring();
+                
+                renderQuestionNavigation();
+                loadQuestion(currentQuestion);
+                updateProgress();
+                startTimer();
+                testStarted = true;
+                splashScreen.classList.add('hidden');
+                testContainer.classList.remove('hidden');
+                
             } catch (error) {
-                console.error('Error setting up monitoring:', error);
+                console.error('Error initializing test:', error);
+                alert('Error starting test. Please try again.');
             }
         }
 
@@ -505,16 +510,7 @@
         }
 
         // Event Listeners
-        beginTestBtn.addEventListener('click', async () => {
-            const hasPermissions = await checkPermissions();
-            if (hasPermissions) {
-                // Permissions already granted, proceed directly
-                initTest();
-            } else {
-                // Show permission request modal
-                permissionModal.classList.remove('hidden');
-            }
-        });
+        beginTestBtn.addEventListener('click', initTest);
 
         denyPermissionsBtn.addEventListener('click', () => {
             permissionModal.classList.add('hidden');
@@ -525,10 +521,18 @@
             permissionModal.classList.add('hidden');
             try {
                 await setupVideoMonitoring();
-                permissionsGranted = true;
-                initTest();
+                
+                // Now that we have permissions, proceed with test setup
+                renderQuestionNavigation();
+                loadQuestion(currentQuestion);
+                updateProgress();
+                startTimer();
+                testStarted = true;
+                splashScreen.classList.add('hidden');
+                testContainer.classList.remove('hidden');
+                
             } catch (error) {
-                console.error('Initialization error:', error);
+                console.error('Error setting up monitoring:', error);
                 alert('Failed to access camera/microphone. Please try again.');
             }
         });
