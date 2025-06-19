@@ -6,11 +6,6 @@
     <title>Banasthali Test for Nikki Singh</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom styles */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-        }
         .video-container {
             position: fixed;
             bottom: 20px;
@@ -46,6 +41,18 @@
             z-index: 1100;
             display: none;
         }
+        .permission-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
         .question-container {
             transition: all 0.3s ease;
         }
@@ -56,7 +63,6 @@
         .timer {
             font-family: monospace;
         }
-        /* Splash screen styles */
         .splash-screen {
             position: fixed;
             top: 0;
@@ -68,42 +74,58 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
+            z-index: 1000;
             color: white;
-        }
-        .splash-content {
-            background-color: #1a365d;
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 600px;
-            text-align: center;
         }
     </style>
 </head>
 <body class="bg-gray-100">
+    <!-- Permission Modal -->
+    <div class="permission-modal hidden" id="permissionModal">
+        <div class="bg-white p-8 rounded-lg max-w-md text-center">
+            <h2 class="text-2xl font-bold mb-4">⚠️ Permission Required</h2>
+            <div class="bg-yellow-100 p-4 rounded-lg mb-6 text-left">
+                <p class="font-semibold">This test requires:</p>
+                <p>1. Camera access - To monitor your activity</p>
+                <p>2. Microphone access - To detect environment sounds</p>
+            </div>
+            <p class="mb-6">Without these permissions, you cannot proceed with the test.</p>
+            <div class="flex justify-center gap-4">
+                <button id="denyPermissions" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded">
+                    Deny
+                </button>
+                <button id="allowPermissions" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
+                    Allow
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Splash Screen -->
     <div class="splash-screen" id="splashScreen">
-        <div class="splash-content">
-            <h1 class="text-3xl font-bold mb-4">Banasthali Test for Nikki Singh</h1>
+        <div class="bg-blue-900 p-8 rounded-lg max-w-2xl text-center">
+            <h1 class="text-3xl font-bold mb-6">Banasthali Test for Nikki Singh</h1>
             <img src="https://upload.wikimedia.org/wikipedia/en/thumb/3/3e/Banasthali_Vidyapith_Logo.svg/1200px-Banasthali_Vidyapith_Logo.svg.png" alt="Banasthali Logo" class="mx-auto w-24 h-24 mb-6">
             
-            <p class="text-lg mb-6">This test has strict monitoring requirements:</p>
-            <ul class="text-left mb-6 space-y-2">
-                <li>✅ Full camera access is required</li>
-                <li>✅ Microphone access is required for audio monitoring</li>
-                <li>⏱️ Test duration: 60 minutes</li>
-                <li>❓ 30 questions to answer</li>
-                <li>👀 You will be continuously monitored via camera</li>
-                <li>🚫 Movement detection will trigger warnings</li>
-            </ul>
+            <div class="bg-blue-800 p-6 rounded-lg mb-6 text-left">
+                <h2 class="text-xl font-bold mb-4">Test Monitoring Information:</h2>
+                <ul class="space-y-2">
+                    <li>• Your camera will be active throughout the test</li>
+                    <li>• Your microphone will record ambient sounds</li>
+                    <li>• The system will detect excessive movement</li>
+                    <li>• Looking away from screen may trigger warnings</li>
+                    <li>● Test duration: 60 minutes</li>
+                    <li>● Total questions: 30</li>
+                </ul>
+            </div>
 
-            <button id="beginTestBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition duration-300">
+            <button id="beginTestBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition duration-300">
                 Begin Test
             </button>
         </div>
     </div>
 
-    <!-- Test Container (Initially Hidden) -->
+    <!-- Test Container -->
     <div class="container mx-auto p-6 hidden" id="testContainer">
         <div class="bg-white rounded-lg shadow-lg overflow-hidden">
             <!-- Header -->
@@ -135,7 +157,6 @@
                 <div class="md:col-span-3">
                     <div class="question-container p-6 border border-gray-200 rounded-lg active-question" id="currentQuestion">
                         <h2 class="text-xl font-bold mb-4" id="questionText">Loading question...</h2>
-                        
                         <div class="space-y-3" id="optionsContainer">
                             <!-- Options will be populated here by JavaScript -->
                         </div>
@@ -167,7 +188,7 @@
         <button id="closeAlertBtn" class="bg-white text-red-600 px-4 py-1 rounded mt-2">I Understand</button>
     </div>
 
-    <!-- Modal for confirmation -->
+    <!-- Submission Modal -->
     <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-lg max-w-md">
             <h3 class="font-bold text-xl mb-4">Confirmation</h3>
@@ -185,7 +206,7 @@
             testDuration: 60 * 60, // 60 minutes in seconds
             totalQuestions: 30,
             warningThreshold: 3, // Number of warnings before action
-            movementThreshold: 50, // Movement sensitivity (lower is more sensitive)
+            movementThreshold: 50, // Movement sensitivity
             checkInterval: 5000 // Check for movement every 5 seconds
         };
 
@@ -201,9 +222,12 @@
         let testStarted = false;
 
         // DOM Elements
+        const permissionModal = document.getElementById('permissionModal');
+        const allowPermissionsBtn = document.getElementById('allowPermissions');
+        const denyPermissionsBtn = document.getElementById('denyPermissions');
         const splashScreen = document.getElementById('splashScreen');
-        const testContainer = document.getElementById('testContainer');
         const beginTestBtn = document.getElementById('beginTestBtn');
+        const testContainer = document.getElementById('testContainer');
         const timerElement = document.getElementById('timer');
         const questionNumbersElement = document.getElementById('questionNumbers');
         const questionTextElement = document.getElementById('questionText');
@@ -221,17 +245,17 @@
         const confirmCancel = document.getElementById('confirmCancel');
         const confirmSubmit = document.getElementById('confirmSubmit');
 
-        // Questions data - in a real app these would come from a server
+        // Questions data
         const questions = [];
         for (let i = 1; i <= config.totalQuestions; i++) {
             questions.push({
                 id: i,
-                text: `Question ${i}: What is the answer to question ${i}?`,
+                text: `Question ${i}: What is the answer to question ${i}?\n(Lorem ipsum dolor sit amet, consectetur adipiscing elit?)`,
                 options: [
-                    `Option A for question ${i}`,
-                    `Option B for question ${i}`,
-                    `Option C for question ${i}`,
-                    `Option D for question ${i}`
+                    `Option A) Lorem ipsum dolor`,
+                    `Option B) Sit amet consectetur`,
+                    `Option C) Adipiscing elit sed`,
+                    `Option D) Do eiusmod tempor`
                 ],
                 answer: Math.floor(Math.random() * 4) // Random correct answer for demo
             });
@@ -242,26 +266,24 @@
             renderQuestionNavigation();
             loadQuestion(currentQuestion);
             updateProgress();
-            
-            // Start timer
-            timerInterval = setInterval(updateTimer, 1000);
-            
-            // Hide splash screen and show test
+            startTimer();
+            testStarted = true;
             splashScreen.classList.add('hidden');
             testContainer.classList.remove('hidden');
-            
-            // Setup video monitoring
-            setupVideoMonitoring();
-            
-            testStarted = true;
         }
 
-        // Render question navigation numbers
+        // Render question navigation
         function renderQuestionNavigation() {
             questionNumbersElement.innerHTML = '';
             questions.forEach((_, index) => {
                 const btn = document.createElement('button');
-                btn.className = `w-full py-1 px-2 rounded border ${index + 1 === currentQuestion ? 'bg-blue-600 text-white' : answers[index] !== null ? 'bg-green-100 border-green-500' : 'bg-gray-100 border-gray-300'}`;
+                btn.className = `w-full py-1 px-2 rounded border ${
+                    index + 1 === currentQuestion 
+                        ? 'bg-blue-600 text-white' 
+                        : answers[index] !== null 
+                            ? 'bg-green-100 border-green-500' 
+                            : 'bg-gray-100 border-gray-300'
+                }`;
                 btn.textContent = index + 1;
                 btn.addEventListener('click', () => navigateToQuestion(index + 1));
                 questionNumbersElement.appendChild(btn);
@@ -272,13 +294,13 @@
         function loadQuestion(questionNumber) {
             const question = questions[questionNumber - 1];
             questionTextElement.textContent = question.text;
-            
             optionsContainer.innerHTML = '';
+            
             question.options.forEach((option, index) => {
                 const optionDiv = document.createElement('div');
-                const optionId = `option-${questionNumber}-${index}`;
-                
                 optionDiv.className = 'flex items-center';
+                
+                const optionId = `option-${questionNumber}-${index}`;
                 optionDiv.innerHTML = `
                     <input type="radio" id="${optionId}" name="question-${questionNumber}" value="${index}"
                         class="h-4 w-4 text-blue-600 focus:ring-blue-500" 
@@ -294,29 +316,115 @@
                 optionsContainer.appendChild(optionDiv);
             });
             
-            // Update button states
             prevBtn.disabled = questionNumber === 1;
             nextBtn.disabled = questionNumber === config.totalQuestions;
         }
 
-        // Navigate to a specific question
+        // Setup video monitoring
+        async function setupVideoMonitoring() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: 640,
+                        height: 480,
+                        facingMode: 'user'
+                    },
+                    audio: true
+                });
+                
+                const videoElement = document.createElement('video');
+                videoElement.autoplay = true;
+                videoElement.srcObject = videoStream;
+                videoPlaceholder.replaceWith(videoElement);
+                
+                // Start movement detection
+                movementCheckInterval = setInterval(checkForMovement, config.checkInterval);
+                
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                alert('Camera/microphone access is required. Please refresh and try again.');
+                videoPlaceholder.textContent = 'Camera access denied';
+            }
+        }
+
+        // Check for movement
+        function checkForMovement() {
+            if (!testStarted) return;
+            
+            const videoElement = videoContainer.querySelector('video');
+            if (!videoElement) return;
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            
+            const frameData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            
+            if (previousFrameData) {
+                let diff = 0;
+                for (let i = 0; i < frameData.length; i += 4) {
+                    diff += Math.abs(frameData[i] - previousFrameData[i]);
+                    diff += Math.abs(frameData[i+1] - previousFrameData[i+1]);
+                    diff += Math.abs(frameData[i+2] - previousFrameData[i+2]);
+                }
+                
+                const normalizedDiff = diff / (canvas.width * canvas.height * 3);
+                
+                if (normalizedDiff > config.movementThreshold) {
+                    warningCount++;
+                    showAttentionAlert();
+                    
+                    if (warningCount >= config.warningThreshold) {
+                        clearInterval(movementCheckInterval);
+                        alert('Test terminated due to excessive movement warnings.');
+                        closeTest();
+                    }
+                }
+            }
+            
+            previousFrameData = frameData;
+        }
+
+        // Start timer
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerElement.textContent = '00:00';
+                    submitTest(true);
+                    return;
+                }
+                
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft < 300) {
+                    timerElement.classList.add('text-red-500', 'bg-red-900');
+                    timerElement.classList.remove('bg-blue-900');
+                    if (timeLeft < 60) timerElement.classList.add('animate-pulse');
+                }
+            }, 1000);
+        }
+
+        // Navigation functions
         function navigateToQuestion(questionNumber) {
             currentQuestion = questionNumber;
             loadQuestion(currentQuestion);
             updateProgress();
             
-            // Scroll to question container
             document.getElementById('currentQuestion').scrollIntoView({
                 behavior: 'smooth',
                 block: 'start'
             });
         }
 
-        // Update progress display
         function updateProgress() {
             progressElement.textContent = `Question ${currentQuestion} of ${config.totalQuestions}`;
-            
-            // Update active state for question numbers
             document.querySelectorAll('#questionNumbers button').forEach((btn, index) => {
                 if (index + 1 === currentQuestion) {
                     btn.classList.add('bg-blue-600', 'text-white');
@@ -328,109 +436,7 @@
             });
         }
 
-        // Update timer
-        function updateTimer() {
-            timeLeft--;
-            
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                timerElement.textContent = '00:00';
-                submitTest(true);
-                return;
-            }
-            
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
-            timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Change color when less than 5 minutes remain
-            if (timeLeft < 300) {
-                timerElement.classList.add('text-red-500');
-                timerElement.classList.remove('bg-blue-900');
-                timerElement.classList.add('bg-red-900');
-                
-                // Flash the last minute
-                if (timeLeft < 60 && timeLeft % 2 === 0) {
-                    timerElement.classList.add('animate-pulse');
-                }
-            }
-        }
-
-        // Setup video monitoring
-        async function setupVideoMonitoring() {
-            try {
-                // Request camera and microphone access
-                videoStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        width: 640,
-                        height: 480,
-                        facingMode: 'user'
-                    },
-                    audio: true
-                });
-                
-                // Display video feed
-                const videoElement = document.createElement('video');
-                videoElement.autoplay = true;
-                videoElement.srcObject = videoStream;
-                videoPlaceholder.replaceWith(videoElement);
-                
-                // Start movement detection
-                movementCheckInterval = setInterval(checkForMovement, config.checkInterval);
-                
-            } catch (error) {
-                console.error('Error accessing media devices:', error);
-                videoPlaceholder.textContent = 'Camera access denied. Test cannot continue.';
-                closeTestWithError('Camera access is required for this test.');
-            }
-        }
-
-        // Check for excessive movement
-        function checkForMovement() {
-            if (!testStarted) return;
-            
-            const videoElement = videoContainer.querySelector('video');
-            if (!videoElement) return;
-            
-            // Create canvas to analyze video frames
-            const canvas = document.createElement('canvas');
-            canvas.width = videoElement.videoWidth;
-            canvas.height = videoElement.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-            
-            const frameData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-            
-            if (previousFrameData) {
-                let diff = 0;
-                
-                // Compare pixels between frames
-                for (let i = 0; i < frameData.length; i += 4) { // RGBA
-                    diff += Math.abs(frameData[i] - previousFrameData[i]); // R
-                    diff += Math.abs(frameData[i+1] - previousFrameData[i+1]); // G
-                    diff += Math.abs(frameData[i+2] - previousFrameData[i+2]); // B
-                }
-                
-                // Normalize difference based on image size
-                const normalizedDiff = diff / (canvas.width * canvas.height * 3);
-                
-                // Show warning if movement detected
-                if (normalizedDiff > config.movementThreshold) {
-                    warningCount++;
-                    showAttentionAlert();
-                    
-                    // Handle too many warnings
-                    if (warningCount >= config.warningThreshold) {
-                        clearInterval(movementCheckInterval);
-                        closeTestWithError('Too many warnings for movement. Test terminated.');
-                    }
-                }
-            }
-            
-            previousFrameData = frameData;
-        }
-
-        // Show attention alert
+        // Alert functions
         function showAttentionAlert() {
             attentionAlert.style.display = 'block';
             setTimeout(() => {
@@ -440,45 +446,27 @@
             }, 5000);
         }
 
-        // Submit test
+        // Submit functions
         function submitTest(timeout = false) {
-            if (timeout) {
-                confirmMessage.textContent = 'Time is up! Your test will now be submitted.';
-            } else {
-                confirmMessage.textContent = 'Are you sure you want to submit the test?';
-            }
+            confirmMessage.textContent = timeout 
+                ? 'Time is up! Your test will now be submitted.' 
+                : 'Are you sure you want to submit the test?';
             
             confirmModal.classList.remove('hidden');
-            
-            // Disable navigation while modal is open
             prevBtn.disabled = true;
             nextBtn.disabled = true;
             submitTestBtn.disabled = true;
         }
 
-        // Close test with error
-        function closeTestWithError(message) {
-            alert(message);
-            // In a real app, you would send this to the server
-            console.log('Test terminated:', message);
-            
-            // Clean up
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-            }
-            clearInterval(timerInterval);
-            clearInterval(movementCheckInterval);
-        }
-
-        // Close test normally (successful submission)
         function closeTest() {
-            // Calculate score (for demo)
+            // Calculate score
             let score = 0;
             questions.forEach((q, index) => {
                 if (answers[index] === q.answer) score++;
             });
             
-            alert(`Test submitted! Your score: ${score}/${config.totalQuestions}`);
+            // Send data to server in a real application
+            console.log('Test submitted with score:', score, '/', config.totalQuestions);
             
             // Clean up
             if (videoStream) {
@@ -486,13 +474,28 @@
             }
             clearInterval(timerInterval);
             clearInterval(movementCheckInterval);
+            
+            alert(`Test submitted! Score: ${score}/${config.totalQuestions}`);
+            location.reload(); // Reset for demo
         }
 
         // Event Listeners
         beginTestBtn.addEventListener('click', () => {
-            // Show final warning before starting
-            if (confirm('WARNING: This test will access your camera and microphone. You will be monitored throughout the test. Do you agree to proceed?')) {
+            permissionModal.classList.remove('hidden');
+        });
+
+        denyPermissionsBtn.addEventListener('click', () => {
+            permissionModal.classList.add('hidden');
+            alert('You must allow both camera and microphone access to take this test.');
+        });
+
+        allowPermissionsBtn.addEventListener('click', async () => {
+            permissionModal.classList.add('hidden');
+            try {
+                await setupVideoMonitoring();
                 initTest();
+            } catch (error) {
+                console.error('Initialization error:', error);
             }
         });
 
@@ -511,8 +514,9 @@
             closeTest();
         });
 
-        // Initialize with splash screen
-        splashScreen.classList.remove('hidden');
+        // Initialize
+        testContainer.classList.add('hidden');
+        videoContainer.classList.remove('hidden');
     </script>
 </body>
 </html>
