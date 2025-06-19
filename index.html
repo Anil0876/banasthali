@@ -220,6 +220,7 @@
         let previousFrameData;
         let movementCheckInterval;
         let testStarted = false;
+        let permissionsGranted = false;
 
         // DOM Elements
         const permissionModal = document.getElementById('permissionModal');
@@ -261,8 +262,26 @@
             });
         }
 
+        // Check current permissions
+        async function checkPermissions() {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const hasCamera = devices.some(device => device.kind === 'videoinput');
+                const hasMic = devices.some(device => device.kind === 'audioinput');
+                
+                if (hasCamera && hasMic) {
+                    permissionsGranted = true;
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                return false;
+            }
+        }
+
         // Initialize the test
-        function initTest() {
+        async function initTest() {
             renderQuestionNavigation();
             loadQuestion(currentQuestion);
             updateProgress();
@@ -270,6 +289,12 @@
             testStarted = true;
             splashScreen.classList.add('hidden');
             testContainer.classList.remove('hidden');
+            
+            try {
+                await setupVideoMonitoring();
+            } catch (error) {
+                console.error('Error setting up monitoring:', error);
+            }
         }
 
         // Render question navigation
@@ -342,8 +367,8 @@
                 
             } catch (error) {
                 console.error('Error accessing media devices:', error);
-                alert('Camera/microphone access is required. Please refresh and try again.');
                 videoPlaceholder.textContent = 'Camera access denied';
+                throw error;
             }
         }
 
@@ -480,8 +505,15 @@
         }
 
         // Event Listeners
-        beginTestBtn.addEventListener('click', () => {
-            permissionModal.classList.remove('hidden');
+        beginTestBtn.addEventListener('click', async () => {
+            const hasPermissions = await checkPermissions();
+            if (hasPermissions) {
+                // Permissions already granted, proceed directly
+                initTest();
+            } else {
+                // Show permission request modal
+                permissionModal.classList.remove('hidden');
+            }
         });
 
         denyPermissionsBtn.addEventListener('click', () => {
@@ -493,9 +525,11 @@
             permissionModal.classList.add('hidden');
             try {
                 await setupVideoMonitoring();
+                permissionsGranted = true;
                 initTest();
             } catch (error) {
                 console.error('Initialization error:', error);
+                alert('Failed to access camera/microphone. Please try again.');
             }
         });
 
