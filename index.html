@@ -178,7 +178,7 @@
 
     <!-- Video Monitoring Container -->
     <div class="video-container" id="videoContainer">
-        <div id="videoPlaceholder">Waiting for camera access...</div>
+        <div id="videoPlaceholder">Camera access required</div>
     </div>
 
     <!-- Attention Alert -->
@@ -250,104 +250,59 @@
         for (let i = 1; i <= config.totalQuestions; i++) {
             questions.push({
                 id: i,
-                text: `Question ${i}: What is the answer to question ${i}?\n(Lorem ipsum dolor sit amet, consectetur adipiscing elit?)`,
+                text: `Question ${i}: What is the answer to question ${i}?`,
                 options: [
-                    `Option A) Lorem ipsum dolor`,
-                    `Option B) Sit amet consectetur`,
-                    `Option C) Adipiscing elit sed`,
-                    `Option D) Do eiusmod tempor`
+                    `Option A for question ${i}`,
+                    `Option B for question ${i}`,
+                    `Option C for question ${i}`,
+                    `Option D for question ${i}`
                 ],
                 answer: Math.floor(Math.random() * 4) // Random correct answer for demo
             });
         }
 
-        // Check if permissions are already granted
-        async function checkPermissions() {
+        // Check if permissions are already granted by examining device labels
+        async function checkExistingPermissions() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                // Immediately stop the stream (we just wanted to check permissions)
-                stream.getTracks().forEach(track => track.stop());
-                return true;
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const hasCamera = devices.some(device => device.kind === 'videoinput' && device.label !== '');
+                const hasMic = devices.some(device => device.kind === 'audioinput' && device.label !== '');
+                return hasCamera && hasMic;
             } catch (error) {
+                console.error('Error checking existing permissions:', error);
                 return false;
             }
         }
 
         // Initialize the test
-        async function initTest() {
+        async function startTest() {
             try {
-                // First try to get permissions without showing the permission prompt
-                const hasPermissions = await checkPermissions();
+                // Check if permissions are already granted
+                const hasPermissions = await checkExistingPermissions();
                 
-                if (!hasPermissions) {
+                if (hasPermissions) {
+                    // If permissions exist, setup monitoring and start test
+                    await setupVideoMonitoring();
+                    startTestContent();
+                } else {
                     // If permissions aren't granted, show the permission modal
                     permissionModal.classList.remove('hidden');
-                    return;
                 }
-
-                // If we have permissions, proceed with test setup
-                await setupVideoMonitoring();
-                
-                renderQuestionNavigation();
-                loadQuestion(currentQuestion);
-                updateProgress();
-                startTimer();
-                testStarted = true;
-                splashScreen.classList.add('hidden');
-                testContainer.classList.remove('hidden');
-                
             } catch (error) {
-                console.error('Error initializing test:', error);
-                alert('Error starting test. Please try again.');
+                console.error('Error starting test:', error);
+                permissionModal.classList.remove('hidden');
             }
         }
 
-        // Render question navigation
-        function renderQuestionNavigation() {
-            questionNumbersElement.innerHTML = '';
-            questions.forEach((_, index) => {
-                const btn = document.createElement('button');
-                btn.className = `w-full py-1 px-2 rounded border ${
-                    index + 1 === currentQuestion 
-                        ? 'bg-blue-600 text-white' 
-                        : answers[index] !== null 
-                            ? 'bg-green-100 border-green-500' 
-                            : 'bg-gray-100 border-gray-300'
-                }`;
-                btn.textContent = index + 1;
-                btn.addEventListener('click', () => navigateToQuestion(index + 1));
-                questionNumbersElement.appendChild(btn);
-            });
-        }
-
-        // Load a question
-        function loadQuestion(questionNumber) {
-            const question = questions[questionNumber - 1];
-            questionTextElement.textContent = question.text;
-            optionsContainer.innerHTML = '';
-            
-            question.options.forEach((option, index) => {
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'flex items-center';
-                
-                const optionId = `option-${questionNumber}-${index}`;
-                optionDiv.innerHTML = `
-                    <input type="radio" id="${optionId}" name="question-${questionNumber}" value="${index}"
-                        class="h-4 w-4 text-blue-600 focus:ring-blue-500" 
-                        ${answers[questionNumber - 1] === index ? 'checked' : ''}>
-                    <label for="${optionId}" class="ml-2 block text-gray-700">${option}</label>
-                `;
-                
-                optionDiv.querySelector('input').addEventListener('change', (e) => {
-                    answers[questionNumber - 1] = parseInt(e.target.value);
-                    renderQuestionNavigation();
-                });
-                
-                optionsContainer.appendChild(optionDiv);
-            });
-            
-            prevBtn.disabled = questionNumber === 1;
-            nextBtn.disabled = questionNumber === config.totalQuestions;
+        // Start the test content
+        function startTestContent() {
+            renderQuestionNavigation();
+            loadQuestion(currentQuestion);
+            updateProgress();
+            startTimer();
+            testStarted = true;
+            splashScreen.classList.add('hidden');
+            testContainer.classList.remove('hidden');
         }
 
         // Setup video monitoring
@@ -417,6 +372,54 @@
             previousFrameData = frameData;
         }
 
+        // Render question navigation
+        function renderQuestionNavigation() {
+            questionNumbersElement.innerHTML = '';
+            questions.forEach((_, index) => {
+                const btn = document.createElement('button');
+                btn.className = `w-full py-1 px-2 rounded border ${
+                    index + 1 === currentQuestion 
+                        ? 'bg-blue-600 text-white' 
+                        : answers[index] !== null 
+                            ? 'bg-green-100 border-green-500' 
+                            : 'bg-gray-100 border-gray-300'
+                }`;
+                btn.textContent = index + 1;
+                btn.addEventListener('click', () => navigateToQuestion(index + 1));
+                questionNumbersElement.appendChild(btn);
+            });
+        }
+
+        // Load a question
+        function loadQuestion(questionNumber) {
+            const question = questions[questionNumber - 1];
+            questionTextElement.textContent = question.text;
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'flex items-center';
+                
+                const optionId = `option-${questionNumber}-${index}`;
+                optionDiv.innerHTML = `
+                    <input type="radio" id="${optionId}" name="question-${questionNumber}" value="${index}"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500" 
+                        ${answers[questionNumber - 1] === index ? 'checked' : ''}>
+                    <label for="${optionId}" class="ml-2 block text-gray-700">${option}</label>
+                `;
+                
+                optionDiv.querySelector('input').addEventListener('change', (e) => {
+                    answers[questionNumber - 1] = parseInt(e.target.value);
+                    renderQuestionNavigation();
+                });
+                
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            prevBtn.disabled = questionNumber === 1;
+            nextBtn.disabled = questionNumber === config.totalQuestions;
+        }
+
         // Start timer
         function startTimer() {
             timerInterval = setInterval(() => {
@@ -441,7 +444,7 @@
             }, 1000);
         }
 
-        // Navigation functions
+        // Navigate to question
         function navigateToQuestion(questionNumber) {
             currentQuestion = questionNumber;
             loadQuestion(currentQuestion);
@@ -453,6 +456,7 @@
             });
         }
 
+        // Update progress
         function updateProgress() {
             progressElement.textContent = `Question ${currentQuestion} of ${config.totalQuestions}`;
             document.querySelectorAll('#questionNumbers button').forEach((btn, index) => {
@@ -466,7 +470,7 @@
             });
         }
 
-        // Alert functions
+        // Show attention alert
         function showAttentionAlert() {
             attentionAlert.style.display = 'block';
             setTimeout(() => {
@@ -476,7 +480,28 @@
             }, 5000);
         }
 
-        // Submit functions
+        // Close test
+        function closeTest() {
+            // Calculate score
+            let score = 0;
+            questions.forEach((q, index) => {
+                if (answers[index] === q.answer) score++;
+            });
+            
+            console.log('Test submitted with score:', score, '/', config.totalQuestions);
+            
+            // Clean up
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            clearInterval(timerInterval);
+            clearInterval(movementCheckInterval);
+            
+            alert(`Test submitted! Score: ${score}/${config.totalQuestions}`);
+            location.reload();
+        }
+
+        // Submit test
         function submitTest(timeout = false) {
             confirmMessage.textContent = timeout 
                 ? 'Time is up! Your test will now be submitted.' 
@@ -488,29 +513,8 @@
             submitTestBtn.disabled = true;
         }
 
-        function closeTest() {
-            // Calculate score
-            let score = 0;
-            questions.forEach((q, index) => {
-                if (answers[index] === q.answer) score++;
-            });
-            
-            // Send data to server in a real application
-            console.log('Test submitted with score:', score, '/', config.totalQuestions);
-            
-            // Clean up
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-            }
-            clearInterval(timerInterval);
-            clearInterval(movementCheckInterval);
-            
-            alert(`Test submitted! Score: ${score}/${config.totalQuestions}`);
-            location.reload(); // Reset for demo
-        }
-
         // Event Listeners
-        beginTestBtn.addEventListener('click', initTest);
+        beginTestBtn.addEventListener('click', startTest);
 
         denyPermissionsBtn.addEventListener('click', () => {
             permissionModal.classList.add('hidden');
@@ -518,22 +522,13 @@
         });
 
         allowPermissionsBtn.addEventListener('click', async () => {
-            permissionModal.classList.add('hidden');
             try {
                 await setupVideoMonitoring();
-                
-                // Now that we have permissions, proceed with test setup
-                renderQuestionNavigation();
-                loadQuestion(currentQuestion);
-                updateProgress();
-                startTimer();
-                testStarted = true;
-                splashScreen.classList.add('hidden');
-                testContainer.classList.remove('hidden');
-                
+                startTestContent();
+                permissionModal.classList.add('hidden');
             } catch (error) {
-                console.error('Error setting up monitoring:', error);
-                alert('Failed to access camera/microphone. Please try again.');
+                console.error('Failed to get permissions:', error);
+                alert('Could not access camera/microphone. Please allow permissions to continue.');
             }
         });
 
@@ -554,7 +549,6 @@
 
         // Initialize
         testContainer.classList.add('hidden');
-        videoContainer.classList.remove('hidden');
     </script>
 </body>
 </html>
